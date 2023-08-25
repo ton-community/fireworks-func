@@ -14,24 +14,10 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const fireworks = provider.open(Fireworks.createFromAddress(address));
 
-    const counterBefore = await fireworks.getCounter();
-
-    await fireworks.sendIncrease(provider.sender(), {
-        increaseBy: 1,
-        value: toNano('0.05'),
+    await fireworks.sendLaunch(provider.sender(), {
+        value: toNano('1'),
     });
 
-    ui.write('Waiting for counter to increase...');
+    ui.write('Fireworks launched...');
 
-    let counterAfter = await fireworks.getCounter();
-    let attempt = 1;
-    while (counterAfter === counterBefore) {
-        ui.setActionPrompt(`Attempt ${attempt}`);
-        await sleep(2000);
-        counterAfter = await fireworks.getCounter();
-        attempt++;
-    }
-
-    ui.clearActionPrompt();
-    ui.write('Counter increased successfully!');
 }

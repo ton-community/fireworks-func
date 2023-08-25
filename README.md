@@ -19,7 +19,10 @@
 
 ### Deploy or run another script
 
-`npx blueprint run` or `yarn blueprint run`
+`npx blueprint run {script}` or `yarn blueprint run {script}`
+scripts:
+- sendDeploy
+- launchFireworks
 
 ### Add a new contract
 
