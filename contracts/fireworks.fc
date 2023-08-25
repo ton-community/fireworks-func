@@ -31,7 +31,7 @@ const int ONE_TON = 1000000000;
 
         ;; prepare 4 messages
 
-        ;; msg_1
+        ;; msg1
 
         cell msg1 = begin_cell()
                 .store_uint(0x18, 6)
@@ -64,7 +64,7 @@ const int ONE_TON = 1000000000;
 
         send_raw_message(msg3, 0 + 2);
 
-        ;; msg3
+        ;; msg4
 
         cell msg4 = begin_cell()
                 .store_uint(0x18, 6)
