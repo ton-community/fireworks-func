@@ -1,0 +1,83 @@
+#include "imports/stdlib.fc";
+
+const op::launch = "op::launch"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
+const int ONE_TON = 1000000000;
+
+
+;; recv_internal is the main function of the contract and is called when it receives a message from other contracts
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    if (in_msg_body.slice_empty?()) { ;; ignore all empty messages
+        return ();
+    }
+
+    [int balance, _] = get_balance(); ;;get current balance
+    if (balance < ONE_TON)
+            {
+                throw(401); ;; not enough balance
+            }
+
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) { ;; ignore all bounced messages
+        return ();
+    }
+
+    slice sender_address = cs~load_msg_addr();
+
+    int op = in_msg_body~load_uint(32); ;; by convention, the first 32 bits of incoming message is the op
+    ;;int query_id = in_msg_body~load_uint(64); ;; also by convention, the next 64 bits contain the "query id", although this is not always the case
+
+    if (op == op::launch) {
+
+        ;; prepare 4 messages
+
+        ;; msg_1
+
+        cell msg1 = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(sender_address)
+                .store_coins(100000000) ;; 0.10 TON
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+                .end_cell();
+
+        send_raw_message(msg1, 0);
+
+        ;; msg2
+
+        cell msg2 = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(sender_address)
+                .store_coins(100000000) ;; 0.10 TON
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+                .end_cell();
+
+        send_raw_message(msg2, 0 + 1);
+
+        ;; msg3
+
+        cell msg3 = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(sender_address)
+                .store_coins(100000000) ;; 0.10 TON
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+                .end_cell();
+
+        send_raw_message(msg3, 0 + 2);
+
+        ;; msg3
+
+        cell msg4 = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(sender_address)
+                .store_coins(0) ;; will be sent the rest of balance via mode
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+                .end_cell();
+
+        send_raw_message(msg4, 128 + 32);
+
+
+        return ();
+    }
+
+    throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
+}
