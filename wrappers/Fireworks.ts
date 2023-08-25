@@ -75,6 +75,7 @@ export class Fireworks implements Contract {
             value: opts.value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
+                .storeUint(Opcodes.launch, 32)
                 .endCell(),
         });
     }
