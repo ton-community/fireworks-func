@@ -11,7 +11,8 @@ export function fireworksConfigToCell(config: FireworksConfig): Cell {
 
 export const Opcodes = {
     increase: 0x7e8764ef,
-    launch: 0xe3aeb7a1
+    launch_first: 0x6efe144b,
+    launch_second: 0xa2e2c2dc
 };
 
 export class Fireworks implements Contract {
@@ -35,27 +36,23 @@ export class Fireworks implements Contract {
         });
     }
 
-    async sendIncrease(
-        provider: ContractProvider,
-        via: Sender,
-        opts: {
-            increaseBy: number;
-            value: bigint;
-            queryID?: number;
-        }
-    ) {
+
+    async sendDeployLaunch(provider: ContractProvider, via: Sender, value: bigint) {
         await provider.internal(via, {
-            value: opts.value,
+            value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
-                .storeUint(Opcodes.launch, 32)
+                .storeUint(Opcodes.launch_first, 32)
                 .endCell(),
         });
-    }
 
-    async getCounter(provider: ContractProvider) {
-        const result = await provider.get('get_counter', []);
-        return result.stack.readNumber();
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Opcodes.launch_second, 32)
+                .endCell(),
+        });
     }
 
     async getID(provider: ContractProvider) {
@@ -75,7 +72,7 @@ export class Fireworks implements Contract {
             value: opts.value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
-                .storeUint(Opcodes.launch, 32)
+                .storeUint(Opcodes.launch_first, 32)
                 .endCell(),
         });
     }

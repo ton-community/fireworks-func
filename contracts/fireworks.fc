@@ -1,15 +1,25 @@
 #include "imports/stdlib.fc";
 
-const op::launch = "op::launch"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
+const op::launch_first = "op::launch_first"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
+const op::launch_second = "op::launch_second"c;
 const int ONE_TON = 1000000000;
 
-() send_message(int value, int mode, slice destination) inline {
+const slice comment_msg_0 = "send mode = 0";
+const slice comment_msg_1 = "send mode = 1";
+const slice comment_msg_2 = "send mode = 2";
+const slice comment_msg_32+128 = "send mode = 32 + 128";
+const slice comment_msg_64 = "send_mode = 64";
+
+
+() send_message(int value, int mode, slice comment, slice destination) impure inline {
 
     cell msg = begin_cell()
         .store_uint(0x18, 6)
         .store_slice(destination)
         .store_coins(value)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_uint(0, 32)
+        .store_slice(comment)
         .end_cell();
 
     send_raw_message(msg, mode);
@@ -39,58 +49,34 @@ const int ONE_TON = 1000000000;
     int op = in_msg_body~load_uint(32); ;; by convention, the first 32 bits of incoming message is the op
     ;;int query_id = in_msg_body~load_uint(64); ;; also by convention, the next 64 bits contain the "query id", although this is not always the case
 
-    if (op == op::launch) {
+    if (op == op::launch_first) {
 
         ;; prepare 4 messages
 
         ;; msg1 - sending 0.1 TON with mode = 0
-        send_message(ONE_TON / 10, 0, sender_address);
-;;        cell msg1 = begin_cell()
-;;                .store_uint(0x18, 6)
-;;                .store_slice(sender_address)
-;;                .store_coins(100000000) ;; 0.10 TON
-;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-;;                .end_cell();
-;;
-;;        send_raw_message(msg1, 0);
+        send_message(ONE_TON / 10, 0, comment_msg_0, sender_address);
 
         ;; msg2 - sending 0.1 TON with mode = 1
-        send_message(ONE_TON / 10, 0 + 1, sender_address);
+        send_message(ONE_TON / 10,  1, comment_msg_1,sender_address);
 
+        ;; msg3 - sending 0.1 TON with mode = 2
+        send_message(ONE_TON / 10, 2, comment_msg_2,sender_address);
 
-;;        cell msg2 = begin_cell()
-;;                .store_uint(0x18, 6)
-;;                .store_slice(sender_address)
-;;                .store_coins(100000000) ;; 0.10 TON
-;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-;;                .end_cell();
-;;
-;;        send_raw_message(msg2, 1);
-
-        ;; msg3
-        send_message(ONE_TON / 10, 2, sender_address);
-;;        cell msg3 = begin_cell()
-;;                .store_uint(0x18, 6)
-;;                .store_slice(sender_address)
-;;                .store_coins(100000000) ;; 0.10 TON
-;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-;;                .end_cell();
-;;
-;;        send_raw_message(msg3, 0 + 2);
-
-        ;; msg4
-        send_message(ONE_TON / 10, 128 + 32, sender_address);
-;;        cell msg4 = begin_cell()
-;;                .store_uint(0x18, 6)
-;;                .store_slice(sender_address)
-;;                .store_coins(0) ;; will be sent the rest of balance via mode
-;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-;;                .end_cell();
-;;
-;;        send_raw_message(msg4, 128 + 32);
-
+        ;; msg4 - sending 0.1 TON with mode = 2
+        send_message(ONE_TON / 10, 128 + 32, comment_msg_32+128,sender_address);
 
         return ();
+    }
+
+    if (op == op::launch_second) {
+
+        ;; prepare a message
+
+        ;; msg1 - sending 0.1 TON with mode = 0
+        send_message(ONE_TON / 10, 64, comment_msg_64, sender_address);
+
+        return ();
+
     }
 
     throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
