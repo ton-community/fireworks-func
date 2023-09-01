@@ -44,37 +44,18 @@ describe('Fireworks', () => {
         // blockchain and fireworks are ready to use
     });
 
-    it('should increase counter', async () => {
-        const increaseTimes = 3;
-        for (let i = 0; i < increaseTimes; i++) {
-            console.log(`increase ${i + 1}/${increaseTimes}`);
+    it('should send 4 messages', async () => {
 
-            const increaser = await blockchain.treasury('increaser' + i);
+        const launcher = await blockchain.treasury('launcher');
 
-            const counterBefore = await fireworks.getCounter();
+        const launchResult = await fireworks.sendLaunch(launcher.getSender(), { value : toNano('1') });
 
-            console.log('counter before increasing', counterBefore);
 
-            const increaseBy = Math.floor(Math.random() * 100);
+        expect(launchResult).toHaveTransaction({
+            from: launcher.address,
+            to: fireworks.address,
+            outMessagesCount: 4
+        })
 
-            console.log('increasing by', increaseBy);
-
-            const increaseResult = await fireworks.sendIncrease(increaser.getSender(), {
-                increaseBy,
-                value: toNano('0.05'),
-            });
-
-            expect(increaseResult.transactions).toHaveTransaction({
-                from: increaser.address,
-                to: fireworks.address,
-                success: true,
-            });
-
-            const counterAfter = await fireworks.getCounter();
-
-            console.log('counter after increasing', counterAfter);
-
-            expect(counterAfter).toBe(counterBefore + increaseBy);
-        }
     });
 });

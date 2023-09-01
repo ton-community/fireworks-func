@@ -3,6 +3,19 @@
 const op::launch = "op::launch"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
 const int ONE_TON = 1000000000;
 
+() send_message(int value, int mode, slice destination) inline {
+
+    cell msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(destination)
+        .store_coins(value)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .end_cell();
+
+    send_raw_message(msg, mode);
+
+}
+
 
 ;; recv_internal is the main function of the contract and is called when it receives a message from other contracts
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -10,8 +23,7 @@ const int ONE_TON = 1000000000;
         return ();
     }
 
-    [int balance, _] = get_balance(); ;;get current balance
-    if (balance < ONE_TON)
+    if (my_balance < ONE_TON)
             {
                 throw(401); ;; not enough balance
             }
@@ -31,49 +43,51 @@ const int ONE_TON = 1000000000;
 
         ;; prepare 4 messages
 
-        ;; msg1
+        ;; msg1 - sending 0.1 TON with mode = 0
+        send_message(ONE_TON / 10, 0, sender_address);
+;;        cell msg1 = begin_cell()
+;;                .store_uint(0x18, 6)
+;;                .store_slice(sender_address)
+;;                .store_coins(100000000) ;; 0.10 TON
+;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+;;                .end_cell();
+;;
+;;        send_raw_message(msg1, 0);
 
-        cell msg1 = begin_cell()
-                .store_uint(0x18, 6)
-                .store_slice(sender_address)
-                .store_coins(100000000) ;; 0.10 TON
-                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                .end_cell();
+        ;; msg2 - sending 0.1 TON with mode = 1
+        send_message(ONE_TON / 10, 0 + 1, sender_address);
 
-        send_raw_message(msg1, 0);
 
-        ;; msg2
-
-        cell msg2 = begin_cell()
-                .store_uint(0x18, 6)
-                .store_slice(sender_address)
-                .store_coins(100000000) ;; 0.10 TON
-                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                .end_cell();
-
-        send_raw_message(msg2, 0 + 1);
+;;        cell msg2 = begin_cell()
+;;                .store_uint(0x18, 6)
+;;                .store_slice(sender_address)
+;;                .store_coins(100000000) ;; 0.10 TON
+;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+;;                .end_cell();
+;;
+;;        send_raw_message(msg2, 1);
 
         ;; msg3
-
-        cell msg3 = begin_cell()
-                .store_uint(0x18, 6)
-                .store_slice(sender_address)
-                .store_coins(100000000) ;; 0.10 TON
-                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                .end_cell();
-
-        send_raw_message(msg3, 0 + 2);
+        send_message(ONE_TON / 10, 2, sender_address);
+;;        cell msg3 = begin_cell()
+;;                .store_uint(0x18, 6)
+;;                .store_slice(sender_address)
+;;                .store_coins(100000000) ;; 0.10 TON
+;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+;;                .end_cell();
+;;
+;;        send_raw_message(msg3, 0 + 2);
 
         ;; msg4
-
-        cell msg4 = begin_cell()
-                .store_uint(0x18, 6)
-                .store_slice(sender_address)
-                .store_coins(0) ;; will be sent the rest of balance via mode
-                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                .end_cell();
-
-        send_raw_message(msg4, 128 + 32);
+        send_message(ONE_TON / 10, 128 + 32, sender_address);
+;;        cell msg4 = begin_cell()
+;;                .store_uint(0x18, 6)
+;;                .store_slice(sender_address)
+;;                .store_coins(0) ;; will be sent the rest of balance via mode
+;;                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+;;                .end_cell();
+;;
+;;        send_raw_message(msg4, 128 + 32);
 
 
         return ();
