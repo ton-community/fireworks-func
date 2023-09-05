@@ -46,7 +46,11 @@ export class Fireworks implements Contract {
 
     async sendDeployLaunch(provider: ContractProvider, via: Sender, value: bigint) {
 
-        let init = Fireworks.getStateInit();
+        //let init = Fireworks.getStateInit();
+
+        if (this.init === undefined) {
+            throw Error('wrong init state');
+        }
 
 
         await provider.internal(via, {
@@ -54,8 +58,8 @@ export class Fireworks implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
                 .storeUint(Opcodes.set_first, 32)
-                .storeRef(init)
-                .endCell(),
+                .storeRef(beginCell().storeRef(this.init.code).storeRef(this.init.data).endCell())
+                .endCell()
         });
 
     }
