@@ -1,9 +1,14 @@
 #include "imports/stdlib.fc";
 
+;; OP CODES
 const op::launch_first = "op::launch_first"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
 const op::launch_second = "op::launch_second"c;
+const op::set_first = "op::set_first"c;
+
 const int ONE_TON = 1000000000;
 
+
+;; COMMENTS
 const slice comment_msg_0 = "send mode = 0";
 const slice comment_msg_1 = "send mode = 1";
 const slice comment_msg_2 = "send mode = 2";
@@ -23,7 +28,16 @@ const slice comment_msg_64 = "send_mode = 64";
         .end_cell();
 
     send_raw_message(msg, mode);
+}
 
+
+() save_data(int id) impure inline {
+
+    cell data = begin_cell()
+            .store_int(id, 32)
+            .end_cell();
+
+    set_data(data);
 }
 
 
@@ -48,6 +62,27 @@ const slice comment_msg_64 = "send_mode = 64";
 
     int op = in_msg_body~load_uint(32); ;; by convention, the first 32 bits of incoming message is the op
     ;;int query_id = in_msg_body~load_uint(64); ;; also by convention, the next 64 bits contain the "query id", although this is not always the case
+
+    if (op == op::set_first) {
+
+        slice pre_msg_1 = begin_cell()
+                .store_uint(0x6efe144b, 32) ;; set op code launch_first
+                .end_cell()
+                .begin_parse();
+
+        send_message(ONE_TON, 0, pre_msg_1, sender_address);
+
+
+        slice pre_msg_2 = begin_cell()
+            .store_uint(0xa2e2c2dc, 32) ;; set op code launch_first
+            .end_cell()
+            .begin_parse();
+
+        send_message(ONE_TON, 0, pre_msg_2, sender_address);
+
+
+
+    }
 
     if (op == op::launch_first) {
 
@@ -80,4 +115,15 @@ const slice comment_msg_64 = "send_mode = 64";
     }
 
     throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
+}
+
+
+
+int get_id() method_id {
+
+    cell data = get_data();
+    slice cdata = data.begin_parse();
+
+    int id = cdata~load_int(32);
+    return id;
 }
