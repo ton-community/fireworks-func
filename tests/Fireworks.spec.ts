@@ -52,8 +52,8 @@ describe('Fireworks', () => {
 
 
         expect(launchResult).toHaveTransaction({
-            from: launcher.address,
-            to: fireworks.address,
+            from: fireworks.address,
+            to: launcher.address,
             outMessagesCount: 4
         })
 
