@@ -11,6 +11,7 @@ export function fireworksConfigToCell(config: FireworksConfig): Cell {
 
 export const Opcodes = {
     increase: 0x7e8764ef,
+    set_first: 0x5720cfeb,
     launch_first: 0x6efe144b,
     launch_second: 0xa2e2c2dc
 };
@@ -41,18 +42,12 @@ export class Fireworks implements Contract {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
+            init: beginCell().endCell(),
             body: beginCell()
-                .storeUint(Opcodes.launch_first, 32)
+                .storeUint(Opcodes.set_first, 32)
                 .endCell(),
         });
 
-        await provider.internal(via, {
-            value,
-            sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell()
-                .storeUint(Opcodes.launch_second, 32)
-                .endCell(),
-        });
     }
 
     async getID(provider: ContractProvider) {

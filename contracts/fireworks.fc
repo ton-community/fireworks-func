@@ -1,12 +1,12 @@
 #include "imports/stdlib.fc";
 
+;; CONSTS
+const int ONE_TON = 1000000000;
+
 ;; OP CODES
 const op::launch_first = "op::launch_first"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
 const op::launch_second = "op::launch_second"c;
 const op::set_first = "op::set_first"c;
-
-const int ONE_TON = 1000000000;
-
 
 ;; COMMENTS
 const slice comment_msg_0 = "send mode = 0";
@@ -31,9 +31,10 @@ const slice comment_msg_64 = "send_mode = 64";
 }
 
 
-() save_data(int id) impure inline {
+() save_data(slice address, int id) impure inline {
 
     cell data = begin_cell()
+            .store_slice(address)
             .store_int(id, 32)
             .end_cell();
 
@@ -65,22 +66,29 @@ const slice comment_msg_64 = "send_mode = 64";
 
     if (op == op::set_first) {
 
+        cell state_init = in_msg_body~load_ref();
+
         slice pre_msg_1 = begin_cell()
                 .store_uint(0x6efe144b, 32) ;; set op code launch_first
                 .end_cell()
                 .begin_parse();
 
-        send_message(ONE_TON, 0, pre_msg_1, sender_address);
+        int state_init_hash = cell_hash(state_init);
+        slice dest_address = begin_cell().store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
 
+        cell msg_1 = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(dest_address)
+        .store_coins(ONE_TON)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32)
+        .store_uint(1,1)                ;;  state_init - true
+        .store_uint(1, 1)               ;;  state_init stored in ref
+        .store_ref(state_init)
+        .store_uint(0,1 )               ;;  msg body stored in slice
+        .store_uint(0xa2e2c2dc, 32)     ;;  set op code launch_first
+        .end_cell();
 
-        slice pre_msg_2 = begin_cell()
-            .store_uint(0xa2e2c2dc, 32) ;; set op code launch_first
-            .end_cell()
-            .begin_parse();
-
-        send_message(ONE_TON, 0, pre_msg_2, sender_address);
-
-
+        send_raw_message(msg_1, 0);
 
     }
 
