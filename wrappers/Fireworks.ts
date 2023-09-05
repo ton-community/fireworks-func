@@ -6,7 +6,7 @@ export type FireworksConfig = {
 };
 
 export function fireworksConfigToCell(config: FireworksConfig): Cell {
-    return beginCell().storeUint(config.id, 32).storeUint(config.counter, 32).endCell();
+    return beginCell().storeUint(config.id, 32).endCell();
 }
 
 export const Opcodes = {
@@ -29,6 +29,12 @@ export class Fireworks implements Contract {
         return new Fireworks(contractAddress(workchain, init), init);
     }
 
+    static getStateInit(config: FireworksConfig, code: Cell, workchain = 0) {
+        const data = fireworksConfigToCell(config);
+        const init = { code, data };
+        return init;
+    }
+
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
         await provider.internal(via, {
             value,
@@ -39,12 +45,16 @@ export class Fireworks implements Contract {
 
 
     async sendDeployLaunch(provider: ContractProvider, via: Sender, value: bigint) {
+
+        let init = Fireworks.getStateInit();
+
+
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            init: beginCell().endCell(),
             body: beginCell()
                 .storeUint(Opcodes.set_first, 32)
+                .storeRef(init)
                 .endCell(),
         });
 
