@@ -4,6 +4,8 @@ import { Fireworks } from '../wrappers/Fireworks';
 import '@ton-community/test-utils';
 import { compile } from '@ton-community/blueprint';
 
+
+
 describe('Fireworks', () => {
     let code: Cell;
 
@@ -14,8 +16,17 @@ describe('Fireworks', () => {
     let blockchain: Blockchain;
     let fireworks: SandboxContract<Fireworks>;
 
+
     beforeEach(async () => {
         blockchain = await Blockchain.create();
+
+        blockchain.verbosity = {
+            ...blockchain.verbosity,
+            blockchainLogs: true,
+            vmLogs: 'vm_logs_full',
+            debugLogs: true,
+            print: true,
+        }
 
         fireworks = blockchain.openContract(
             Fireworks.createFromConfig(
@@ -50,10 +61,10 @@ describe('Fireworks', () => {
         const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
 
 
-        expect(launchResult).toHaveTransaction({
+        expect(launchResult.transactions).toHaveTransaction({
             from: launcher.address,
             to: fireworks.address,
-            //op: 0x5720cfeb //set_first
+            op: 0x5720cfeb //set_first
         })
 
     });
@@ -66,10 +77,12 @@ describe('Fireworks', () => {
         const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
 
 
-        expect(launchResult).toHaveTransaction({
+        expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
-            //op: 0x6efe144b //launch_first
+            op: 0x6efe144b //launch_first
         })
+
+        console.log(launchResult.transactions[2]);
 
     });
 });
