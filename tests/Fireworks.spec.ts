@@ -21,7 +21,6 @@ describe('Fireworks', () => {
             Fireworks.createFromConfig(
                 {
                     id: 0,
-                    counter: 0,
                 },
                 code
             )
@@ -44,18 +43,35 @@ describe('Fireworks', () => {
         // blockchain and fireworks are ready to use
     });
 
-    it('should send 4 messages', async () => {
+    it('should set first fireworks', async () => {
 
         const launcher = await blockchain.treasury('launcher');
 
-        const launchResult = await fireworks.sendLaunch(launcher.getSender(), { value : toNano('1') });
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
+
+
+        expect(launchResult).toHaveTransaction({
+            from: launcher.address,
+            to: fireworks.address,
+            //op: 0x5720cfeb //set_first
+        })
+
+    });
+
+
+    it('should launch first fireworks', async () => {
+
+        const launcher = await blockchain.treasury('launcher');
+
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
 
 
         expect(launchResult).toHaveTransaction({
             from: fireworks.address,
-            to: launcher.address,
-            outMessagesCount: 4
+            //op: 0x6efe144b //launch_first
         })
 
     });
 });
+
+
