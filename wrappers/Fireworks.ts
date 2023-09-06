@@ -2,7 +2,6 @@ import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, 
 
 export type FireworksConfig = {
     id: number;
-    counter: number;
 };
 
 export function fireworksConfigToCell(config: FireworksConfig): Cell {
@@ -58,7 +57,7 @@ export class Fireworks implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
                 .storeUint(Opcodes.set_first, 32)
-                .storeRef(beginCell().storeRef(this.init.code).storeRef(this.init.data).endCell())
+                .storeRef((this.init.code))
                 .endCell()
         });
 

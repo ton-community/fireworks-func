@@ -66,12 +66,28 @@ const slice comment_msg_64 = "send_mode = 64";
 
     if (op == op::set_first) {
 
-        cell state_init = in_msg_body~load_ref();
+        cell prev_init_data = cs~load_ref();
+        slice prev_id = prev_init_data.begin_parse();
+        int id = prev_id~load_uint(32);
 
-        slice pre_msg_1 = begin_cell()
-                .store_uint(0x6efe144b, 32) ;; set op code launch_first
-                .end_cell()
-                .begin_parse();
+        save_data(sender_address, id );
+
+        cell init_code = in_msg_body~load_ref();
+
+        cell init_data = begin_cell()
+                .store_uint(1, 32)
+                .end_cell();
+
+        cell state_init = begin_cell()
+                .store_uint(0, 1) ;;no split_depth
+                .store_uint(0, 1) ;; no special
+                .store_uint(1, 1) ;; we have code
+                .store_ref(init_code)
+                .store_uint(1, 1) ;; we have data
+                .store_ref(init_data)
+                .store_uint(0, 1) ;; we have no library
+                .end_cell();
+
 
         int state_init_hash = cell_hash(state_init);
         slice dest_address = begin_cell().store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
