@@ -82,7 +82,7 @@ const slice comment_msg_64 = "send_mode = 64";
 
         var msg = begin_cell()
         .store_uint(0x18, 6)
-        .store_slice(sender_address)
+        .store_slice(dest_address)
         .store_coins(ONE_TON)
         ;; serialize CurrencyCollection (see below)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1)
