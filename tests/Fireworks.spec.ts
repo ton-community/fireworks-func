@@ -1,5 +1,5 @@
 import { Blockchain, SandboxContract } from '@ton-community/sandbox';
-import { Cell, toNano, beginCell } from 'ton-core';
+import { Cell, toNano, beginCell, Address } from 'ton-core';
 import { Fireworks } from '../wrappers/Fireworks';
 import '@ton-community/test-utils';
 import { compile } from '@ton-community/blueprint';
@@ -82,8 +82,20 @@ describe('Fireworks', () => {
             op: 0x6efe144b //launch_first
         })
 
+
+
+
+    });
+
+    it('should send tranasaction to first fireworks', async () => {
+
+        const launcher = await blockchain.treasury('launcher');
+
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
+
         const init_code = code;
         const init_data = beginCell().storeUint(1, 32).endCell();
+
 
         const state_init = beginCell()
             .storeUint(0, 1) //no split_depth
@@ -100,11 +112,14 @@ describe('Fireworks', () => {
             throw Error("wrong type");
         }
 
-        let address = beginCell().storeInt(0, 8).storeUint(hash_dst. , 256).endCell();
 
-        slice dest_address = begin_cell().store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
+        let lauchned_f1_address = new Address(0, hash_dst());
 
 
+        expect(launchResult.transactions).toHaveTransaction({
+            from: fireworks.address,
+            to: lauchned_f1_address
+        })
 
     });
 });
