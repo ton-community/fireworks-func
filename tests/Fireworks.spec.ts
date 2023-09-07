@@ -75,15 +75,11 @@ describe('Fireworks', () => {
         const launcher = await blockchain.treasury('launcher');
 
         const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
-
-
+        
         expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
             op: 0x6efe144b //launch_first
         })
-
-
-
 
     });
 
