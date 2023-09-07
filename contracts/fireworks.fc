@@ -60,6 +60,10 @@ const slice comment_msg_64 = "send_mode = 64";
                 .store_uint(1, 32)
                 .end_cell();
 
+;;_ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
+;;  code:(Maybe ^Cell) data:(Maybe ^Cell)
+;;  library:(HashmapE 256 SimpleLib) = StateInit;
+
         cell state_init = begin_cell()
                 .store_uint(0, 1) ;;no split_depth
                 .store_uint(0, 1) ;; no special
@@ -74,18 +78,25 @@ const slice comment_msg_64 = "send_mode = 64";
         int state_init_hash = cell_hash(state_init);
         slice dest_address = begin_cell().store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
 
-        cell msg_1 = begin_cell()
+
+
+        var msg = begin_cell()
         .store_uint(0x18, 6)
-        .store_slice(dest_address)
+        .store_slice(sender_address)
         .store_coins(ONE_TON)
-        .store_uint(0, 1 + 4 + 4 + 64 + 32)
-        .store_uint(1,1)                ;;  state_init - true
-        .store_uint(1, 1)               ;;  state_init stored in ref
+        ;; serialize CurrencyCollection (see below)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1)
+        .store_uint(1,1) ;;state_init added
+        .store_uint(1,1) ;;state_init placed in reference
         .store_ref(state_init)
-        .store_uint(0,1 )               ;;  msg body stored in slice
-        .store_uint(0x6efe144b, 32)     ;;  set op code launch_first
+        .store_uint(0,  1) ;; inplace message body flag (Either)
+        .store_uint(0x6efe144b, 32)
         .end_cell();
-        send_raw_message(msg_1, 0);
+
+
+        send_raw_message(msg, 0);
+
+
 
     }
 
