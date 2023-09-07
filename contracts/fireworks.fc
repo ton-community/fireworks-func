@@ -88,6 +88,8 @@ const slice comment_msg_64 = "send_mode = 64";
 
         send_raw_message(msg_1, 0);
 
+        return();
+
     }
 
     if (op == op::launch_first) {
