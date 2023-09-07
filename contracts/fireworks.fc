@@ -60,9 +60,9 @@ const slice comment_msg_64 = "send_mode = 64";
                 .store_uint(1, 32)
                 .end_cell();
 
-;;_ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
-;;  code:(Maybe ^Cell) data:(Maybe ^Cell)
-;;  library:(HashmapE 256 SimpleLib) = StateInit;
+        ;;_ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
+        ;;  code:(Maybe ^Cell) data:(Maybe ^Cell)
+        ;;  library:(HashmapE 256 SimpleLib) = StateInit;
 
         cell state_init = begin_cell()
                 .store_uint(0, 1) ;;no split_depth
@@ -76,22 +76,23 @@ const slice comment_msg_64 = "send_mode = 64";
 
 
         int state_init_hash = cell_hash(state_init);
-        slice dest_address = begin_cell().store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
+        slice dest_address = begin_cell().store_uint(4, 3).store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
 
 
 
         var msg = begin_cell()
-        .store_uint(0x18, 6)
-        .store_slice(dest_address)
-        .store_coins(ONE_TON)
-        ;; serialize CurrencyCollection (see below)
-        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1)
-        .store_uint(1,1) ;;state_init added
-        .store_uint(1,1) ;;state_init placed in reference
-        .store_ref(state_init)
-        .store_uint(0,  1) ;; inplace message body flag (Either)
-        .store_uint(0x6efe144b, 32)
-        .end_cell();
+            .store_uint(0x18, 6)
+            .store_slice(dest_address)
+            .store_coins(ONE_TON + ONE_TON / 10)
+            ;; serialize CurrencyCollection (see below)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 )
+            .store_uint(1, 1) ;;state_init added
+            .store_uint(1, 1) ;;state_init placed in reference
+            .store_ref(state_init)
+            .store_uint(0,  1) ;; inplace message body flag (Either)
+            .store_uint(0x6efe144b, 32)
+            .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address paypload
+            .end_cell();
 
 
         send_raw_message(msg, 0);
@@ -101,6 +102,10 @@ const slice comment_msg_64 = "send_mode = 64";
     }
 
     elseif (op == op::launch_first) {
+
+        cell addr = in_msg_body~load_ref();
+
+        sender_address = addr.begin_parse();
 
         ;; prepare 4 messages
 
@@ -119,6 +124,11 @@ const slice comment_msg_64 = "send_mode = 64";
     }
 
     elseif (op == op::launch_second) {
+
+
+        cell addr = cs~load_ref();
+
+        sender_address = addr.begin_parse();
 
         ;; prepare a message
 
