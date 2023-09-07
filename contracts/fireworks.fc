@@ -6,7 +6,7 @@ const int ONE_TON = 1000000000;
 ;; OP CODES
 const op::launch_first = "op::launch_first"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
 const op::launch_second = "op::launch_second"c;
-const op::set_first = "op::set_first"c;
+const op::set_first = "op::set_first"c; ;; 0x5720cfeb
 
 ;; COMMENTS
 const slice comment_msg_0 = "send mode = 0";
@@ -85,14 +85,11 @@ const slice comment_msg_64 = "send_mode = 64";
         .store_uint(0,1 )               ;;  msg body stored in slice
         .store_uint(0x6efe144b, 32)     ;;  set op code launch_first
         .end_cell();
-
         send_raw_message(msg_1, 0);
-
-        return();
 
     }
 
-    if (op == op::launch_first) {
+    elseif (op == op::launch_first) {
 
         ;; prepare 4 messages
 
@@ -108,21 +105,22 @@ const slice comment_msg_64 = "send_mode = 64";
         ;; msg4 - sending 0.1 TON with mode = 2
         send_message(ONE_TON / 10, 128 + 32, comment_msg_32+128,sender_address);
 
-        return ();
     }
 
-    if (op == op::launch_second) {
+    elseif (op == op::launch_second) {
 
         ;; prepare a message
 
         ;; msg1 - sending 0.1 TON with mode = 0
         send_message(ONE_TON / 10, 64, comment_msg_64, sender_address);
 
-        return ();
-
     }
 
-    throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
+    else {
+        throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
+    }
+
+    return();
 }
 
 
