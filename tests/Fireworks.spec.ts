@@ -1,4 +1,4 @@
-import { Blockchain, SandboxContract } from '@ton-community/sandbox';
+import {Blockchain, printTransactionFees, SandboxContract} from '@ton-community/sandbox';
 import { Cell, toNano, beginCell, Address } from 'ton-core';
 import { Fireworks } from '../wrappers/Fireworks';
 import '@ton-community/test-utils';
@@ -25,7 +25,7 @@ describe('Fireworks', () => {
             blockchainLogs: true,
             vmLogs: 'vm_logs_full',
             debugLogs: true,
-            print: true,
+            print: false,
         }
 
         fireworks = blockchain.openContract(
@@ -74,12 +74,14 @@ describe('Fireworks', () => {
 
         const launcher = await blockchain.treasury('launcher');
 
-        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('2.5'));
         
         expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
             op: 0x6efe144b //launch_first
         })
+
+        printTransactionFees(launchResult.transactions);
 
     });
 
@@ -87,7 +89,7 @@ describe('Fireworks', () => {
 
         const launcher = await blockchain.treasury('launcher');
 
-        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('2.5'));
 
         const init_code = code;
         const init_data = beginCell().storeUint(1, 32).endCell();
@@ -114,10 +116,49 @@ describe('Fireworks', () => {
 
         expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
-            to: lauchned_f1_address
+            to: lauchned_f1_address,
+            op: 0x6efe144b
         })
 
     });
+
+  it('should send tranasaction to second fireworks', async () => {
+
+        const launcher = await blockchain.treasury('launcher');
+
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('3.5'));
+
+        const init_code = code;
+        const init_data = beginCell().storeUint(2, 32).endCell();
+
+
+        const state_init = beginCell()
+            .storeUint(0, 1) //no split_depth
+            .storeUint(0, 1) // no special
+            .storeUint(1, 1) // we have code
+            .storeRef(init_code)
+            .storeUint(1, 1) // we have data
+            .storeRef(init_data)
+            .storeUint(0, 1) // we have no library
+            .endCell();
+
+        const hash_dst = state_init.hash
+        if (hash_dst === null) {
+            throw Error("wrong type");
+        }
+
+
+        let lauchned_f2_address = new Address(0, hash_dst());
+
+
+        expect(launchResult.transactions).toHaveTransaction({
+            from: fireworks.address,
+            to: lauchned_f2_address,
+            op: 0xa2e2c2dc
+        })
+
+    });
+
 });
 
 

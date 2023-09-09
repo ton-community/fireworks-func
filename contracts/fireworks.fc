@@ -16,6 +16,16 @@ const slice comment_msg_32+128 = "send mode = 32 + 128";
 const slice comment_msg_64 = "send_mode = 64";
 
 
+int read_id() {
+
+    cell data = get_data();
+    slice cdata = data.begin_parse();
+
+    int id = cdata~load_int(32);
+    return id;
+
+}
+
 () send_message(int value, int mode, slice comment, slice destination) impure inline {
 
     cell msg = begin_cell()
@@ -28,6 +38,50 @@ const slice comment_msg_64 = "send_mode = 64";
         .end_cell();
 
     send_raw_message(msg, mode);
+}
+
+cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
+
+    cell init_data = begin_cell()
+    .store_uint(id, 32)
+    .end_cell();
+
+    ;;_ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
+    ;;  code:(Maybe ^Cell) data:(Maybe ^Cell)
+    ;;  library:(HashmapE 256 SimpleLib) = StateInit;
+
+    cell state_init = begin_cell()
+    .store_uint(0, 1) ;;no split_depth
+    .store_uint(0, 1) ;; no special
+    .store_uint(1, 1) ;; we have code
+    .store_ref(init_code)
+    .store_uint(1, 1) ;; we have data
+    .store_ref(init_data)
+    .store_uint(0, 1) ;; we have no library
+    .end_cell();
+
+
+    int state_init_hash = cell_hash(state_init);
+    slice dest_address = begin_cell().store_uint(4, 3).store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
+
+
+
+    var msg = begin_cell()
+    .store_uint(0x18, 6)
+    .store_slice(dest_address)
+    .store_coins(ONE_TON + ONE_TON / 10)
+    ;; serialize CurrencyCollection (see below)
+    .store_uint(0, 1 + 4 + 4 + 64 + 32 )
+    .store_uint(1, 1) ;;state_init added
+    .store_uint(1, 1) ;;state_init placed in reference
+    .store_ref(state_init)
+    .store_uint(0,  1) ;; inplace message body flag (Either)
+    .store_uint(op_code, 32)
+    .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address paypload
+    .end_cell();
+
+    return msg;
+
 }
 
 
@@ -56,46 +110,18 @@ const slice comment_msg_64 = "send_mode = 64";
 
         cell init_code = in_msg_body~load_ref();
 
-        cell init_data = begin_cell()
-                .store_uint(1, 32)
-                .end_cell();
+        int root_id = read_id();
 
-        ;;_ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
-        ;;  code:(Maybe ^Cell) data:(Maybe ^Cell)
-        ;;  library:(HashmapE 256 SimpleLib) = StateInit;
+        ;; build and send the first fireworks
 
-        cell state_init = begin_cell()
-                .store_uint(0, 1) ;;no split_depth
-                .store_uint(0, 1) ;; no special
-                .store_uint(1, 1) ;; we have code
-                .store_ref(init_code)
-                .store_uint(1, 1) ;; we have data
-                .store_ref(init_data)
-                .store_uint(0, 1) ;; we have no library
-                .end_cell();
+        cell msg1 = build_firework(root_id + 1, op::launch_first, init_code, sender_address);
+        send_raw_message(msg1, 0);
 
 
-        int state_init_hash = cell_hash(state_init);
-        slice dest_address = begin_cell().store_uint(4, 3).store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
+        ;; build and send the second fireworks
 
-
-
-        var msg = begin_cell()
-            .store_uint(0x18, 6)
-            .store_slice(dest_address)
-            .store_coins(ONE_TON + ONE_TON / 10)
-            ;; serialize CurrencyCollection (see below)
-            .store_uint(0, 1 + 4 + 4 + 64 + 32 )
-            .store_uint(1, 1) ;;state_init added
-            .store_uint(1, 1) ;;state_init placed in reference
-            .store_ref(state_init)
-            .store_uint(0,  1) ;; inplace message body flag (Either)
-            .store_uint(0x6efe144b, 32)
-            .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address paypload
-            .end_cell();
-
-
-        send_raw_message(msg, 0);
+        cell msg2 = build_firework(root_id + 2, op::launch_second, init_code, sender_address);
+        send_raw_message(msg2, 0);
 
 
 
@@ -126,14 +152,14 @@ const slice comment_msg_64 = "send_mode = 64";
     elseif (op == op::launch_second) {
 
 
-        cell addr = cs~load_ref();
+        cell addr = in_msg_body~load_ref();
 
         sender_address = addr.begin_parse();
 
         ;; prepare a message
 
         ;; msg1 - sending 0.1 TON with mode = 0
-        send_message(ONE_TON / 10, 64, comment_msg_64, sender_address);
+        send_message(0, 64, comment_msg_64, sender_address);
 
     }
 
@@ -148,9 +174,6 @@ const slice comment_msg_64 = "send_mode = 64";
 
 int get_id() method_id {
 
-    cell data = get_data();
-    slice cdata = data.begin_parse();
-
-    int id = cdata~load_int(32);
+    int id = read_id();
     return id;
 }
