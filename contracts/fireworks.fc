@@ -151,7 +151,6 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
 
     elseif (op == op::launch_second) {
 
-
         cell addr = in_msg_body~load_ref();
 
         sender_address = addr.begin_parse();
