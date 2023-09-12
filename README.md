@@ -1,5 +1,7 @@
 # Fireworks
 
+Special demo contract for gas fees and send modes in TON Blockchain.
+
 ## Project structure
 
 -   `contracts` - source code of all the smart contracts of the project and their dependencies.
@@ -21,8 +23,8 @@
 
 `npx blueprint run {script}` or `yarn blueprint run {script}`
 scripts:
-- sendDeploy
-- launchFireworks
+- instantLaunch
+
 
 ### Add a new contract
 
