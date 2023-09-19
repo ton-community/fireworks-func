@@ -1,6 +1,6 @@
 import {Blockchain, printTransactionFees, SandboxContract} from '@ton-community/sandbox';
 import { Cell, toNano, beginCell, Address } from 'ton-core';
-import { Fireworks } from '../wrappers/Fireworks';
+import {Fireworks, Opcodes} from '../wrappers/Fireworks';
 import '@ton-community/test-utils';
 import { compile } from '@ton-community/blueprint';
 
@@ -58,13 +58,14 @@ describe('Fireworks', () => {
 
         const launcher = await blockchain.treasury('launcher');
 
-        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('1.5'));
+        const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('2.5'));
 
 
         expect(launchResult.transactions).toHaveTransaction({
             from: launcher.address,
             to: fireworks.address,
-            op: 0x5720cfeb //set_first
+            success: true,
+            op: Opcodes.set_first
         })
 
     });
@@ -78,14 +79,15 @@ describe('Fireworks', () => {
         
         expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
-            op: 0x6efe144b //launch_first
+            success: true,
+            op: Opcodes.launch_first
         })
 
         printTransactionFees(launchResult.transactions);
 
     });
 
-    it('should send tranasaction to first fireworks', async () => {
+    it('should send message to first fireworks', async () => {
 
         const launcher = await blockchain.treasury('launcher');
 
@@ -117,12 +119,13 @@ describe('Fireworks', () => {
         expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
             to: launched_f1_address,
-            op: 0x6efe144b
+            success: true,
+            op: Opcodes.launch_first
         })
 
     });
 
-  it('should send tranasaction to second fireworks', async () => {
+  it('should send message to second fireworks', async () => {
 
         const launcher = await blockchain.treasury('launcher');
 
@@ -154,7 +157,8 @@ describe('Fireworks', () => {
         expect(launchResult.transactions).toHaveTransaction({
             from: fireworks.address,
             to: launched_f2_address,
-            op: 0xa2e2c2dc
+            success: true,
+            op: Opcodes.launch_second
         })
 
     });
@@ -262,7 +266,7 @@ describe('Fireworks', () => {
             from: fireworks.address,
             to: launched_f1_address,
             success: true,
-            op: 0x6efe144b, // 'launch_first' op code
+            op: Opcodes.launch_first, // 'launch_first' op code
             outMessagesCount: 4
         });
 
@@ -312,7 +316,7 @@ describe('Fireworks', () => {
             from: fireworks.address,
             to: launched_f2_address,
             success: true,
-            op: 0xa2e2c2dc, // 'launch_second' op code,
+            op: Opcodes.launch_second, // 'launch_second' op code,
             outMessagesCount: 1
         });
 
@@ -481,11 +485,8 @@ describe('Fireworks', () => {
 
         //The check, if Compute Phase and Action Phase fees exceed 1 TON
         expect(computeFee + actionFee).toBeLessThan(toNano('1'));
-
-
+        
     });
-
-
 
 });
 
