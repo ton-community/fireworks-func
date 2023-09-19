@@ -222,6 +222,28 @@ describe('Fireworks', () => {
 
     })
 
+    it('transaction in fireworks failed on Action Phase because insufficient funds ', async() => {
+
+        const launcher = await blockchain.treasury('launcher');
+
+        const launchResult = await fireworks.sendDeployLaunch(
+            launcher.getSender(),
+            toNano('2.0'),
+        );
+
+        expect(launchResult.transactions).toHaveTransaction({
+            from: launcher.address,
+            to: fireworks.address,
+            success: false,
+            aborted: true,
+            actionResultCode : 37,
+            // exit code = Not enough TON. Message sends too much TON (or there is not enough TON after deducting fees). https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            op: Opcodes.set_first
+
+        });
+
+    })
+
 
 
     it('transactions should be processed with expected fees', async() => {
