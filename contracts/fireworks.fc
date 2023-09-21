@@ -7,6 +7,7 @@ const int ONE_TON = 1000000000;
 const op::launch_first = "op::launch_first"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
 const op::launch_second = "op::launch_second"c;
 const op::set_first = "op::set_first"c; ;; 0x5720cfeb
+const op::faked_launch = "op::faked_launch"c; ;;0x39041457
 
 ;; COMMENTS
 const slice comment_msg_0 = "send mode = 0";
@@ -14,6 +15,10 @@ const slice comment_msg_1 = "send mode = 1";
 const slice comment_msg_2 = "send mode = 2";
 const slice comment_msg_32+128 = "send mode = 32 + 128";
 const slice comment_msg_64 = "send_mode = 64";
+
+;; ASM functions
+
+forall X, Y -> [X] tuple_var(Y y) asm "TUPLEVAR";
 
 
 int read_id() {
@@ -25,6 +30,25 @@ int read_id() {
     return id;
 
 }
+
+() fake_launch(cell body) impure
+    {
+        slice cs = body.begin_parse();
+
+        ;;prepare exit_code = 9 case
+        int number = cs~load_uint(2);
+
+        ;;prepare exit_code = 8 case
+        cell recomp = begin_cell()
+            .store_uint(number, 2)
+            .store_slice(cs)
+            .store_uint(2, 2) ;; overflow appears if exceed 1023 bits
+            .end_cell();
+
+        set_data(recomp);
+
+
+    }
 
 () send_message(int value, int mode, slice comment, slice destination) impure inline {
 
@@ -162,6 +186,14 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
 
     }
 
+    elseif (op == op::faked_launch) {
+
+        in_msg_body~load_ref(); ;;skip init cell
+
+        cell msg = in_msg_body~load_ref();
+        fake_launch(msg);
+    }
+
     else {
         throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
     }
@@ -176,3 +208,4 @@ int get_id() method_id {
     int id = read_id();
     return id;
 }
+

@@ -11,7 +11,8 @@ export function fireworksConfigToCell(config: FireworksConfig): Cell {
 export const Opcodes = {
     set_first: 0x5720cfeb,
     launch_first: 0x6efe144b,
-    launch_second: 0xa2e2c2dc
+    launch_second: 0xa2e2c2dc,
+    faked_launch: 0x39041457,
 };
 
 export class Fireworks implements Contract {
@@ -62,10 +63,50 @@ export class Fireworks implements Contract {
 
     }
 
+
+    async sendBadMessage1(provider: ContractProvider, via: Sender, value: bigint) {
+
+        if (this.init === undefined) {
+            throw Error('wrong init state');
+        }
+
+
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Opcodes.faked_launch, 32)
+                .storeRef((this.init.code))
+                .storeRef(beginCell().endCell())
+                .endCell()
+        });
+
+    }
+
+    async sendBadMessage2(provider: ContractProvider, via: Sender, value: bigint) {
+
+        if (this.init === undefined) {
+            throw Error('wrong init state');
+        }
+
+
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Opcodes.faked_launch, 32)
+                .storeRef((this.init.code))
+                .storeRef(beginCell().storeUint(1,256).storeUint(2,256).storeUint(3,256).storeUint(4,255).endCell()) //1023 bits cell
+                .endCell()
+        });
+
+    }
+
     async getID(provider: ContractProvider) {
         const result = await provider.get('get_id', []);
         return result.stack.readNumber();
     }
+
 
     async sendLaunch(
         provider: ContractProvider,
