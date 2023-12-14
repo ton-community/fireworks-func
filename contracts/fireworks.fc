@@ -181,7 +181,7 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
 
         ;; prepare a message
 
-        ;; msg1 - sending 0.1 TON with mode = 0
+        ;; msg1 - sending remaining TON with mode = 64
         send_message(0, 64, comment_msg_64, sender_address);
 
     }
