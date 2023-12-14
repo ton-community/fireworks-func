@@ -101,7 +101,7 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
     .store_ref(state_init)
     .store_uint(0,  1) ;; inplace message body flag (Either)
     .store_uint(op_code, 32)
-    .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address paypload
+    .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address payload
     .end_cell();
 
     return msg;
@@ -168,7 +168,7 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
         ;; msg3 - sending 0.1 TON with mode = 2
         send_message(ONE_TON / 10, 2, comment_msg_2,sender_address);
 
-        ;; msg4 - sending 0.1 TON with mode = 2
+        ;; msg4 - sending remaining TON with mode = 32 + 128
         send_message(ONE_TON / 10, 128 + 32, comment_msg_32+128,sender_address);
 
     }
