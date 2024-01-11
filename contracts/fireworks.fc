@@ -13,7 +13,7 @@ const op::faked_launch = "op::faked_launch"c; ;;0x39041457
 const slice comment_msg_0 = "send mode = 0";
 const slice comment_msg_1 = "send mode = 1";
 const slice comment_msg_2 = "send mode = 2";
-const slice comment_msg_32+128 = "send mode = 32 + 128";
+const slice comment_msg_128+32 = "send mode = 128 + 32";
 const slice comment_msg_64 = "send_mode = 64";
 
 ;; ASM functions
@@ -22,36 +22,30 @@ forall X, Y -> [X] tuple_var(Y y) asm "TUPLEVAR";
 
 
 int read_id() {
-
     cell data = get_data();
     slice cdata = data.begin_parse();
 
     int id = cdata~load_int(32);
     return id;
-
 }
 
-() fake_launch(cell body) impure
-    {
-        slice cs = body.begin_parse();
+() fake_launch(cell body) impure {
+    slice cs = body.begin_parse();
 
-        ;;prepare exit_code = 9 case
-        int number = cs~load_uint(2);
+    ;; prepare exit_code = 9 case
+    int number = cs~load_uint(2);
 
-        ;;prepare exit_code = 8 case
-        cell recomp = begin_cell()
-            .store_uint(number, 2)
-            .store_slice(cs)
-            .store_uint(2, 2) ;; overflow appears if exceed 1023 bits
-            .end_cell();
+    ;; prepare exit_code = 8 case
+    cell recomp = begin_cell()
+        .store_uint(number, 2)
+        .store_slice(cs)
+        .store_uint(2, 2) ;; overflow appears if exceed 1023 bits
+        .end_cell();
 
-        set_data(recomp);
+    set_data(recomp);
+}
 
-
-    }
-
-() send_message(int value, int mode, slice comment, slice destination) impure inline {
-
+() send_message_comment(int value, int mode, slice comment, slice destination) impure inline {
     cell msg = begin_cell()
         .store_uint(0x18, 6)
         .store_slice(destination)
@@ -65,49 +59,44 @@ int read_id() {
 }
 
 cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
-
     cell init_data = begin_cell()
-    .store_uint(id, 32)
-    .end_cell();
+        .store_uint(id, 32)
+        .end_cell();
 
-    ;;_ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
+    ;; _ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
     ;;  code:(Maybe ^Cell) data:(Maybe ^Cell)
     ;;  library:(HashmapE 256 SimpleLib) = StateInit;
 
     cell state_init = begin_cell()
-    .store_uint(0, 1) ;;no split_depth
-    .store_uint(0, 1) ;; no special
-    .store_uint(1, 1) ;; we have code
-    .store_ref(init_code)
-    .store_uint(1, 1) ;; we have data
-    .store_ref(init_data)
-    .store_uint(0, 1) ;; we have no library
-    .end_cell();
-
+        .store_uint(0, 1) ;; no split_depth
+        .store_uint(0, 1) ;; no special
+        .store_uint(1, 1) ;; we have code
+        .store_ref(init_code)
+        .store_uint(1, 1) ;; we have data
+        .store_ref(init_data)
+        .store_uint(0, 1) ;; we have no library
+        .end_cell();
 
     int state_init_hash = cell_hash(state_init);
     slice dest_address = begin_cell().store_uint(4, 3).store_int(0, 8).store_uint(state_init_hash, 256).end_cell().begin_parse();
 
-
-
     var msg = begin_cell()
-    .store_uint(0x18, 6)
-    .store_slice(dest_address)
-    .store_coins(ONE_TON + ONE_TON / 10)
-    ;; serialize CurrencyCollection (see below)
-    .store_uint(0, 1 + 4 + 4 + 64 + 32 )
-    .store_uint(1, 1) ;;state_init added
-    .store_uint(1, 1) ;;state_init placed in reference
-    .store_ref(state_init)
-    .store_uint(0,  1) ;; inplace message body flag (Either)
-    .store_uint(op_code, 32)
-    .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address payload
-    .end_cell();
+        .store_uint(0x18, 6)
+        .store_slice(dest_address)
+        .store_coins(ONE_TON + ONE_TON / 10)
+        ;; serialize CurrencyCollection (see below)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32)
+        .store_uint(1, 1) ;; state_init added
+        .store_uint(1, 1) ;; state_init placed in reference
+        .store_ref(state_init)
+        .store_uint(0,  1) ;; inplace message body flag (Either)
+        .store_uint(op_code, 32)
+        .store_ref(begin_cell().store_slice(sender_address).end_cell()) ;;sender address payload
+        .end_cell();
 
     return msg;
 
 }
-
 
 ;; recv_internal is the main function of the contract and is called when it receives a message from other contracts
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -115,10 +104,9 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
         return ();
     }
 
-    if (my_balance < ONE_TON)
-            {
-                throw(401); ;; not enough balance
-            }
+    if (my_balance < ONE_TON) {
+        throw(401); ;; not enough balance
+    }
 
     slice cs = in_msg_full.begin_parse();
     int flags = cs~load_uint(4);
@@ -131,64 +119,54 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
     int op = in_msg_body~load_uint(32); ;; by convention, the first 32 bits of incoming message is the op
 
     if (op == op::set_first) {
-
         cell init_code = in_msg_body~load_ref();
-
         int root_id = read_id();
+
 
         ;; build and send the first fireworks
 
         cell msg1 = build_firework(root_id + 1, op::launch_first, init_code, sender_address);
         send_raw_message(msg1, 0);
 
-
         ;; build and send the second fireworks
 
         cell msg2 = build_firework(root_id + 2, op::launch_second, init_code, sender_address);
         send_raw_message(msg2, 0);
-
-
-
     }
 
     elseif (op == op::launch_first) {
-
         cell addr = in_msg_body~load_ref();
-
         sender_address = addr.begin_parse();
 
         ;; prepare 4 messages
 
         ;; msg1 - sending 0.1 TON with mode = 0
-        send_message(ONE_TON / 10, 0, comment_msg_0, sender_address);
+        send_message_comment(ONE_TON / 10, 0, comment_msg_0, sender_address);
 
         ;; msg2 - sending 0.1 TON with mode = 1
-        send_message(ONE_TON / 10,  1, comment_msg_1,sender_address);
+        send_message_comment(ONE_TON / 10,  1, comment_msg_1,sender_address);
 
         ;; msg3 - sending 0.1 TON with mode = 2
-        send_message(ONE_TON / 10, 2, comment_msg_2,sender_address);
+        send_message_comment(ONE_TON / 10, 2, comment_msg_2,sender_address);
 
-        ;; msg4 - sending remaining TON with mode = 32 + 128
-        send_message(ONE_TON / 10, 128 + 32, comment_msg_32+128,sender_address);
-
+        ;; msg4 - sending remaining TON with mode = 128 + 32
+        ;; 32 is the flag for destroying the contract
+        send_message_comment(ONE_TON / 10, 128 + 32, comment_msg_128+32,sender_address);
     }
 
     elseif (op == op::launch_second) {
-
         cell addr = in_msg_body~load_ref();
-
         sender_address = addr.begin_parse();
 
         ;; prepare a message
 
         ;; msg1 - sending remaining TON with mode = 64
-        send_message(0, 64, comment_msg_64, sender_address);
+        send_message_comment(0, 64, comment_msg_64, sender_address);
 
     }
 
     elseif (op == op::faked_launch) {
-
-        in_msg_body~load_ref(); ;;skip init cell
+        in_msg_body~load_ref(); ;; skip init cell
 
         cell msg = in_msg_body~load_ref();
         fake_launch(msg);
@@ -201,11 +179,7 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
     return();
 }
 
-
-
 int get_id() method_id {
-
     int id = read_id();
     return id;
 }
-
