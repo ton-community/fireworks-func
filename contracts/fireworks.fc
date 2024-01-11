@@ -19,7 +19,8 @@ const slice comment_msg_64 = "send_mode = 64";
 ;; ASM functions
 
 forall X, Y -> [X] tuple_var(Y y) asm "TUPLEVAR";
-
+() return_alt() impure asm "RETALT"; ;; for alternative return
+() drop() impure asm "DROP";
 
 int read_id() {
     cell data = get_data();
@@ -29,20 +30,40 @@ int read_id() {
     return id;
 }
 
-() fake_launch(cell body) impure {
-    slice cs = body.begin_parse();
+() fake_launch(slice in_msg_body) impure {
+    int error = in_msg_body~load_uint(8);
 
-    ;; prepare exit_code = 9 case
-    int number = cs~load_uint(2);
+    if (error == 0) {
+        return ();
+    }
+    elseif (error == 1) { ;; actually, this is not an error, but a alternative success code
+        return_alt();
+    }
+    elseif (error == 2) {
+        repeat (100) {
+            drop();
+        }
+    }
+    elseif (error == 8) | (error == 9) {
+        cell msg = in_msg_body~load_ref();
+        slice cs = msg.begin_parse();
 
-    ;; prepare exit_code = 8 case
-    cell recomp = begin_cell()
+        ;; 8 exit code
+        int number = cs~load_uint(2);
+
+        ;; 9 exit code
+        cell recomp = begin_cell()
         .store_uint(number, 2)
         .store_slice(cs)
         .store_uint(2, 2) ;; overflow appears if exceed 1023 bits
         .end_cell();
 
-    set_data(recomp);
+        set_data(recomp);
+    }
+    else {
+        throw(0xffff);
+    }
+
 }
 
 () send_message_comment(int value, int mode, slice comment, slice destination) impure inline {
@@ -166,10 +187,7 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
     }
 
     elseif (op == op::faked_launch) {
-        in_msg_body~load_ref(); ;; skip init cell
-
-        cell msg = in_msg_body~load_ref();
-        fake_launch(msg);
+        fake_launch(in_msg_body);
     }
 
     else {
