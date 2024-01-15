@@ -17,10 +17,23 @@ const slice comment_msg_128+32 = "send mode = 128 + 32";
 const slice comment_msg_64 = "send_mode = 64";
 
 ;; ASM functions
-
-forall X, Y -> [X] tuple_var(Y y) asm "TUPLEVAR";
 () return_alt() impure asm "RETALT"; ;; for alternative return
 () drop() impure asm "DROP";
+forall X -> (tuple) to_tuple (X x) asm "NOP";
+(int, int, int, int) untuple4_int (tuple t) asm "4 UNTUPLE";
+() set_c5(cell actions) impure asm "c5 POP";
+() error_opcode() impure asm "x{D7FF} @addop";
+
+int send_msg(cell msg, int mode) impure asm "SENDMSG";
+
+() stack_overflow() impure asm """
+    <{
+    }>CONT // c
+    0 SETNUMARGS // c'
+    2 PUSHINT // c' 2
+    SWAP // 2 c'
+    1 -1 SETCONTARGS
+""";
 
 int read_id() {
     cell data = get_data();
@@ -33,16 +46,38 @@ int read_id() {
 () fake_launch(slice in_msg_body) impure {
     int error = in_msg_body~load_uint(8);
 
-    if (error == 0) {
+
+    ;; Compute Phase
+
+    if (error == 0) { ;; success
         return ();
-    }
-    elseif (error == 1) { ;; actually, this is not an error, but a alternative success code
-        return_alt();
     }
     elseif (error == 2) {
         repeat (100) {
-            drop();
+            drop(); ;; remove 100 elements from the stack
         }
+    }
+    elseif (error == 3) {
+        stack_overflow();
+    }
+    elseif (error == 4) {
+        int max_uint256 = in_msg_body~load_uint(256);
+        max_uint256 += 1;
+        max_uint256~impure_touch();
+    }
+    elseif (error == 5) {
+        int negative_number = in_msg_body~load_int(8);
+        cell invalid_cell = begin_cell().store_uint(negative_number, 8).end_cell();
+        invalid_cell~impure_touch();
+    }
+    elseif (error == 6) {
+        error_opcode();
+        return ();
+    }
+    elseif (error == 7) {
+        tuple t3 = to_tuple([1, 2, 3]);
+        (int a1, int a2, int a3, int a4) = untuple4_int(t3);
+        a1~impure_touch();
     }
     elseif (error == 8) | (error == 9) {
         cell msg = in_msg_body~load_ref();
@@ -60,10 +95,128 @@ int read_id() {
 
         set_data(recomp);
     }
+    elseif (error == 10) {
+        cell dict = new_dict();
+        dict~udict_set(16, 3, begin_cell()
+            .store_ref(
+                begin_cell()
+                .store_uint(123, 32)
+                .end_cell())
+            .store_ref(begin_cell()
+                .store_uint(123, 33)
+                .end_cell())
+                .end_cell()
+                .begin_parse());
+
+        (cell value, int f) = dict.udict_get_ref?(16, 3);
+        value~impure_touch();
+    }
+    elseif (error == 11) {
+        send_msg(begin_cell().end_cell(), 1);
+    }
+    elseif (error == 13) {
+        int i = 0;
+        while (i < 100) {
+            i += 1;
+        }
+        i~impure_touch();
+    }
+
+
+    ;; Action Phase
+
+    elseif (error == 32) {
+        cell actions = begin_cell()
+            .store_uint(0x0ec3c86d, 32)
+            .store_uint(0, 8)
+            .end_cell();
+        set_c5(actions);
+    }
+    elseif (error == 33) {
+        cell msg = begin_cell()
+            .store_uint(0x18, 6)
+            .store_slice(my_address())
+            .store_coins(0)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .end_cell();
+        repeat(256) {
+            send_raw_message(msg, 1);
+        }
+    }
+    elseif (error == 34) {
+        cell invalid_msg = begin_cell().end_cell();
+        send_raw_message(invalid_msg, 0);
+    }
+    elseif (error == 35) {
+        cell msg = begin_cell()
+            .store_uint(6, 4) ;; 0110
+            .store_slice("EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF"a) ;; source address must be zero or my address
+            .store_slice(my_address())
+            .store_coins(1000000000000) ;; 1000 TON
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .end_cell();
+        send_raw_message(msg, 1);
+    }
+    elseif (error == 36) {
+        cell msg = begin_cell()
+            .store_uint(0x18, 6)
+            .store_uint(3, 2) ;; 11 -> MsgAddressInt
+            .store_uint(2, 8) ;; 1 -> workchain (not existing)
+            .store_uint(0, 256) ;; data part
+            .store_coins(1000000000000) ;; 1000 TON
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .end_cell();
+        send_raw_message(msg, 1);
+    }
+    elseif (error == 37) {
+        cell msg = begin_cell()
+            .store_uint(0x18, 6)
+            .store_slice(my_address())
+            .store_coins(1000000000000) ;; 1000 TON
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .end_cell();
+        send_raw_message(msg, 1);
+    }
+    elseif (error == 38) {
+        {-
+            extra_currencies$_ dict:(HashmapE 32 (VarUInteger 32))
+                 = ExtraCurrencyCollection;
+
+            https://github.com/ton-blockchain/ton/blob/24dc184a2ea67f9c47042b4104bbb4d82289fac1/crypto/block/block.tlb#L118C1-L119C44
+        -}
+        cell extra_dict = new_dict();
+        cell extra_data = begin_cell()
+            .store_uint(1, 5) ;; 5 bits for the number of bytes, 1 = 8 bits
+            .store_uint(1, 8) ;; 8 bits for the amount
+            .end_cell();
+        extra_dict~udict_set(32, 1, extra_data.begin_parse());
+        cell msg = begin_cell()
+            .store_uint(0x18, 6)
+            .store_slice(my_address())
+            .store_coins(0)
+            .store_uint(1, 1)
+            .store_ref(extra_dict)
+            .store_uint(0, 4 + 4 + 64 + 32 + 1 + 1)
+            .end_cell();
+        send_raw_message(msg, 1);
+    }
+    elseif (error == 40) {
+        cell deep_body = begin_cell().end_cell();
+        repeat(510) {
+            deep_body = begin_cell().store_ref(deep_body).end_cell();
+        }
+        cell msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(my_address())
+        .store_coins(1000)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+        .store_ref(deep_body)
+        .end_cell();
+        send_raw_message(msg, 0);
+    }
     else {
         throw(0xffff);
     }
-
 }
 
 () send_message_comment(int value, int mode, slice comment, slice destination) impure inline {
@@ -187,6 +340,9 @@ cell build_firework(int id, int op_code, cell init_code, slice sender_address) {
     }
 
     elseif (op == op::faked_launch) {
+        if (in_msg_body.preload_uint(8) == 1) {
+            return_alt();
+        }
         fake_launch(in_msg_body);
     }
 

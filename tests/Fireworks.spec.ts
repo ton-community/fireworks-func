@@ -1,14 +1,8 @@
-import {
-    Blockchain,
-    BlockchainSnapshot,
-    printTransactionFees,
-    SandboxContract,
-    TreasuryContract,
-} from '@ton-community/sandbox';
-import { Cell, toNano, beginCell, Address } from 'ton-core';
+import { Blockchain, BlockchainSnapshot, printTransactionFees, SandboxContract, TreasuryContract } from '@ton/sandbox';
+import { Cell, toNano, beginCell, Address } from '@ton/core';
 import { Fireworks, OPCODES } from '../wrappers/Fireworks';
-import '@ton-community/test-utils';
-import { compile } from '@ton-community/blueprint';
+import '@ton/test-utils';
+import { compile } from '@ton/blueprint';
 
 describe('Direct Tests', () => {
     let code: Cell;
@@ -73,6 +67,10 @@ describe('Direct Tests', () => {
         initialState = blockchain.snapshot();
     });
 
+    afterEach(async () => {
+        await blockchain.loadFrom(initialState);
+    });
+
     it('first transaction[ID:1] should set fireworks successfully', async () => {
         const launchResult = await fireworks.sendDeployLaunch(launcher.getSender(), toNano('2.5'));
 
@@ -82,8 +80,6 @@ describe('Direct Tests', () => {
             success: true,
             op: OPCODES.SET_FIRST,
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:2] which launch first fireworks successfully', async () => {
@@ -100,7 +96,6 @@ describe('Direct Tests', () => {
         });
 
         printTransactionFees(launchResult.transactions);
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:3] which launch second fireworks successfully', async () => {
@@ -115,7 +110,6 @@ describe('Direct Tests', () => {
         });
 
         printTransactionFees(launchResult.transactions);
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:4] with a comment send mode = 0', async () => {
@@ -127,8 +121,6 @@ describe('Direct Tests', () => {
             success: true,
             body: beginCell().storeUint(0, 32).storeStringTail('send mode = 0').endCell(), // 0x00000000 comment opcode and encoded comment
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:5] with a comment send mode = 1', async () => {
@@ -140,8 +132,6 @@ describe('Direct Tests', () => {
             success: true,
             body: beginCell().storeUint(0, 32).storeStringTail('send mode = 1').endCell(), // 0x00000000 comment opcode and encoded comment
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:6] with a comment send mode = 2', async () => {
@@ -153,8 +143,6 @@ describe('Direct Tests', () => {
             success: true,
             body: beginCell().storeUint(0, 32).storeStringTail('send mode = 2').endCell(), // 0x00000000 comment opcode and encoded comment
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:7] with a comment send mode = 128 + 32', async () => {
@@ -166,8 +154,6 @@ describe('Direct Tests', () => {
             success: true,
             body: beginCell().storeUint(0, 32).storeStringTail('send mode = 128 + 32').endCell(), // 0x00000000 comment opcode and encoded comment
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('should exist a transaction[ID:8] with a comment send mode = 64', async () => {
@@ -179,8 +165,6 @@ describe('Direct Tests', () => {
             success: true,
             body: beginCell().storeUint(0, 32).storeStringTail('send_mode = 64').endCell(), // 0x00000000 comment opcode and encoded comment
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('transaction in fireworks failed on Action Phase because insufficient funds ', async () => {
@@ -195,8 +179,6 @@ describe('Direct Tests', () => {
             // exit code = Not enough TON. Message sends too much TON (or there is not enough TON after deducting fees). https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
             op: OPCODES.SET_FIRST,
         });
-
-        await blockchain.loadFrom(initialState);
     });
 
     it('transactions should be processed with expected fees', async () => {
@@ -232,7 +214,5 @@ describe('Direct Tests', () => {
         console.log('fireworks address = ', fireworks.address);
         console.log('launched_f1 address = ', launched_f1.address);
         console.log('launched_f2 address = ', launched_f2.address);
-
-        await blockchain.loadFrom(initialState);
     });
 });

@@ -1,4 +1,4 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from 'ton-core';
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
 
 export type FireworksConfig = {
     id: number;
@@ -58,8 +58,12 @@ export enum ExitCode {
     ActionListInvalid = 32,
     ActionListTooLong = 33,
     ActionInvalid = 34,
+    InvalidSrcAddr = 35,
+    InvalidDstAddr = 36,
     NotEnoughTON = 37,
     NotEnoughExtraCurrencies = 38,
+    RewriteOverflow = 39,
+    NotEnoughFounds,
 }
 
 export class Fireworks implements Contract {
