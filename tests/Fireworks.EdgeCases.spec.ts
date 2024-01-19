@@ -81,7 +81,7 @@ describe('Edge Cases Tests', () => {
             to: fireworks.address,
             success: true,
             exitCode: ExitCode.Success,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 0 | Standard successful execution exit code.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -95,7 +95,7 @@ describe('Edge Cases Tests', () => {
             to: fireworks.address,
             success: true,
             exitCode: ExitCode.SuccessAlt,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 1 | Alternative successful execution exit code.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -110,7 +110,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.StackUnderflow,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 2 | Stack underflow. Last op-code consumed more elements than there are on the stacks.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -125,7 +125,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.StackOverflow,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 3 | Stack overflow. More values have been stored on a stack than allowed by this version of TVM.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -144,7 +144,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.IntegerOverflow,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 4 | Integer overflow. Integer does not fit into −2256 ≤ x < 2256 or a division by zero has occurred.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -163,7 +163,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.IntegerOutOfRange,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 5 | Integer out of expected range.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -178,7 +178,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.InvalidOpcode,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 6 | Invalid opcode. Instruction is unknown in the current TVM version.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -192,7 +192,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.TypeCheckError,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 7 | Type check error. An argument to a primitive is of an incorrect value type.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -211,7 +211,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.CellOverflow,
-            // exit code = 8  Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 8 | Cell overflow.  Writing to builder is not possible since after operation there would be more than 1023 bits or 4 references.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -230,7 +230,8 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.CellUnderflow,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 9 | Stack underflow. Last TVM op-code consumed more elements than there are on the stacks.
+
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -249,7 +250,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.DictionaryError,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 10 | Dictionary error. Error during manipulation with dictionary (hashmaps).
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -268,7 +269,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.UnknownError,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 11 | Most oftenly caused by trying to call get-method whose id wasn't found in the code (missing method_id modifier or wrong get-method name specified when trying to call it). In TVM docs its described as "Unknown error, may be thrown by user programs".
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -287,7 +288,26 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: ExitCode.OutOfGasErrorAlt,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = -14 | It means out of gas error, same as 13. Negative, because it cannot be faked
+            op: OPCODES.FAKED_LAUNCH,
+        });
+    });
+
+    it('compute | exit code = 0xffff', async () => {
+        const body = beginCell()
+            .storeUint(OPCODES.FAKED_LAUNCH, 32)
+            .storeUint(123, 8)
+            .storeRef(beginCell().endCell())
+            .endCell();
+        const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('1'), body);
+
+        expect(launchResult.transactions).toHaveTransaction({
+            from: launcher.address,
+            to: fireworks.address,
+            success: false,
+            aborted: true,
+            exitCode: 0xffff,
+            // exit code = 0xffff | This usually means that the received opcode is unknown to the contract. When writing contracts, this code is set by the developer himself.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -306,7 +326,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.ActionListInvalid,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 32 | Action list is invalid. Set during action phase if c5 register after execution contains unparsable object.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -325,7 +345,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.ActionListTooLong,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 33 | Action list is too long.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -344,7 +364,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.ActionInvalid,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 34 | Action is invalid or not supported. Set during action phase if current action cannot be applied.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -363,7 +383,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.InvalidSrcAddr,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 35 | Invalid Source address in outbound message.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -382,7 +402,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.InvalidDstAddr,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 36 | Invalid Destination address in outbound message.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -401,7 +421,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.NotEnoughTON,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 37 | Not enough TON. Message sends too much TON (or there is not enough TON after deducting fees).
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -420,7 +440,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             actionResultCode: ExitCode.NotEnoughExtraCurrencies,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 38 | Not enough extra-currencies.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
@@ -432,14 +452,33 @@ describe('Edge Cases Tests', () => {
             .storeRef(beginCell().endCell())
             .endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('1'), body);
-        fs.writeFileSync('test.json', JSON.stringify(launchResult.transactions[1].vmLogs, null, 2));
+
         expect(launchResult.transactions).toHaveTransaction({
             from: launcher.address,
             to: fireworks.address,
             success: false,
             aborted: true,
             actionResultCode: ExitCode.NotEnoughFounds,
-            // exit code = 9 Stack underflow. Last TVM op-code consumed more elements than there are on the stacks. https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes
+            // exit code = 40 | Not enough funds to process a message. This error is thrown when there is only enough gas to cover part of the message, but does not cover it completely.
+            op: OPCODES.FAKED_LAUNCH,
+        });
+    });
+
+    it('action | exit code = 43', async () => {
+        const body = beginCell()
+            .storeUint(OPCODES.FAKED_LAUNCH, 32)
+            .storeUint(ExitCode.LibOutOfLimit, 8)
+            .storeRef(beginCell().endCell())
+            .endCell();
+        const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('1'), body);
+
+        expect(launchResult.transactions).toHaveTransaction({
+            from: launcher.address,
+            to: fireworks.address,
+            success: false,
+            aborted: true,
+            actionResultCode: ExitCode.LibOutOfLimit,
+            // exit code = 43 | The maximum number of cells in the library is exceeded or the maximum depth of the Merkle tree is exceeded.
             op: OPCODES.FAKED_LAUNCH,
         });
     });

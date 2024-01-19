@@ -23,6 +23,7 @@ forall X -> (tuple) to_tuple (X x) asm "NOP";
 (int, int, int, int) untuple4_int (tuple t) asm "4 UNTUPLE";
 () set_c5(cell actions) impure asm "c5 POP";
 () error_opcode() impure asm "x{D7FF} @addop";
+() set_lib_code(cell code, int mode) impure asm "SETLIBCODE";
 
 int send_msg(cell msg, int mode) impure asm "SENDMSG";
 
@@ -213,6 +214,19 @@ int read_id() {
         .store_ref(deep_body)
         .end_cell();
         send_raw_message(msg, 0);
+    }
+    elseif (error == 43) {
+        int i = 0;
+        cell lib = begin_cell().store_uint(i, 32).end_cell();
+        repeat (500) {
+            i += 1;
+            cell lib2 = begin_cell().store_uint(i, 32).end_cell();
+            i += 1;
+            lib = begin_cell().store_uint(i, 32).store_ref(lib).store_ref(lib2).end_cell();
+        }
+
+        (int a, int b, int c) = compute_data_size(lib, 2000);
+        set_lib_code(lib, 1);
     }
     else {
         throw(0xffff);
