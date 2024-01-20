@@ -307,7 +307,7 @@ describe('Edge Cases Tests', () => {
             success: false,
             aborted: true,
             exitCode: 0xffff,
-            // exit code = 0xffff | This usually means that the received opcode is unknown to the contract. When writing contracts, this code is set by the developer himself.
+            // exit code = 0xffff (65535 in decimal) | This usually means that the received opcode is unknown to the contract. When writing contracts, this code is set by the developer himself.
             op: OPCODES.FAKED_LAUNCH,
         });
     });
