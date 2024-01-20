@@ -72,7 +72,7 @@ describe('Edge Cases Tests', () => {
         await blockchain.loadFrom(initialState);
     });
 
-    it('compute | exit code = 0', async () => {
+    it('compute phase | exit code = 0', async () => {
         const body = beginCell().storeUint(OPCODES.FAKED_LAUNCH, 32).storeUint(ExitCode.Success, 8).endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('2.0'), body);
 
@@ -86,7 +86,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 1', async () => {
+    it('compute phase | exit code = 1', async () => {
         const body = beginCell().storeUint(OPCODES.FAKED_LAUNCH, 32).storeUint(ExitCode.SuccessAlt, 8).endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('2.0'), body);
 
@@ -100,7 +100,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 2', async () => {
+    it('compute phase | exit code = 2', async () => {
         const body = beginCell().storeUint(OPCODES.FAKED_LAUNCH, 32).storeUint(ExitCode.StackUnderflow, 8).endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('2.0'), body);
 
@@ -115,7 +115,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 3', async () => {
+    it('compute phase | exit code = 3', async () => {
         const body = beginCell().storeUint(OPCODES.FAKED_LAUNCH, 32).storeUint(ExitCode.StackOverflow, 8).endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('2.0'), body);
 
@@ -130,7 +130,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 4', async () => {
+    it('compute phase | exit code = 4', async () => {
         const maxUint256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935n;
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
@@ -149,7 +149,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 5', async () => {
+    it('compute phase | exit code = 5', async () => {
         const negativeNumber = -5;
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
@@ -168,7 +168,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 6', async () => {
+    it('compute phase | exit code = 6', async () => {
         const body = beginCell().storeUint(OPCODES.FAKED_LAUNCH, 32).storeUint(ExitCode.InvalidOpcode, 8).endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('2.0'), body);
 
@@ -183,7 +183,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 7', async () => {
+    it('compute phase | exit code = 7', async () => {
         const body = beginCell().storeUint(OPCODES.FAKED_LAUNCH, 32).storeUint(ExitCode.TypeCheckError, 8).endCell();
         const launchResult = await fireworks.sendBadMessage(launcher.getSender(), toNano('2.0'), body);
         expect(launchResult.transactions).toHaveTransaction({
@@ -197,7 +197,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 8', async () => {
+    it('compute phase | exit code = 8', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.CellOverflow, 8)
@@ -216,7 +216,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 9', async () => {
+    it('compute phase | exit code = 9', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.CellUnderflow, 8)
@@ -236,7 +236,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 10', async () => {
+    it('compute phase | exit code = 10', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.DictionaryError, 8)
@@ -255,7 +255,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 11', async () => {
+    it('compute phase | exit code = 11', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.UnknownError, 8)
@@ -274,7 +274,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = -14', async () => {
+    it('compute phase | exit code = -14', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.OutOfGasError, 8)
@@ -293,7 +293,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('compute | exit code = 0xffff', async () => {
+    it('compute phase | exit code = 0xffff', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(123, 8)
@@ -312,7 +312,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 32', async () => {
+    it('action phase | exit code = 32', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.ActionListInvalid, 8)
@@ -331,7 +331,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 33', async () => {
+    it('action phase | exit code = 33', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.ActionListTooLong, 8)
@@ -350,7 +350,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 34', async () => {
+    it('action phase | exit code = 34', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.ActionInvalid, 8)
@@ -369,7 +369,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 35', async () => {
+    it('action phase | exit code = 35', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.InvalidSrcAddr, 8)
@@ -388,7 +388,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 36', async () => {
+    it('action phase | exit code = 36', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.InvalidDstAddr, 8)
@@ -407,7 +407,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 37', async () => {
+    it('action phase | exit code = 37', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.NotEnoughTON, 8)
@@ -426,7 +426,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 38', async () => {
+    it('action phase | exit code = 38', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.NotEnoughExtraCurrencies, 8)
@@ -445,7 +445,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 40', async () => {
+    it('action phase | exit code = 40', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.NotEnoughFounds, 8)
@@ -464,7 +464,7 @@ describe('Edge Cases Tests', () => {
         });
     });
 
-    it('action | exit code = 43', async () => {
+    it('action phase | exit code = 43', async () => {
         const body = beginCell()
             .storeUint(OPCODES.FAKED_LAUNCH, 32)
             .storeUint(ExitCode.LibOutOfLimit, 8)
