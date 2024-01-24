@@ -84,10 +84,10 @@ int read_id() {
         cell msg = in_msg_body~load_ref();
         slice cs = msg.begin_parse();
 
-        ;; 8 exit code
+        ;; 9 exit code
         int number = cs~load_uint(2);
 
-        ;; 9 exit code
+        ;; 8 exit code
         cell recomp = begin_cell()
         .store_uint(number, 2)
         .store_slice(cs)
