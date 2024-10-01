@@ -23,7 +23,9 @@ Special demo contract for gas fees and send modes in TON Blockchain.
 
 `npx blueprint run {script}` or `yarn blueprint run {script}`
 scripts:
-- instantLaunch
+- instantFireworks (deployment and launching)
+- fakeFireworks (edge cases launching)
+- deployFireworks (deployment only)
 
 
 ### Add a new contract
